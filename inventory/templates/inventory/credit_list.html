@@ -1,0 +1,102 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-hand-holding-usd"></i> Credit Transactions
+        </h2>
+        <div>
+            <a href="{% url 'issue_credit' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Credit
+            </a>
+            <a href="{% url 'debt_summary' %}" class="btn btn-danger">
+                <i class="fas fa-file-invoice-dollar"></i> View Debt Summary
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-0">Total Unpaid: <span class="text-danger">KES {{ total_unpaid|floatformat:2 }}</span></h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group">
+                        <a href="?status=all" class="btn btn-sm btn-outline-secondary {% if not request.GET.status or request.GET.status == 'all' %}active{% endif %}">
+                            All
+                        </a>
+                        <a href="?status=unpaid" class="btn btn-sm btn-outline-danger {% if request.GET.status == 'unpaid' %}active{% endif %}">
+                            Unpaid
+                        </a>
+                        <a href="?status=paid" class="btn btn-sm btn-outline-success {% if request.GET.status == 'paid' %}active{% endif %}">
+                            Paid
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Products</th>
+                    <th class="text-end">Amount</th>
+                    <th>Date Issued</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for credit in credits %}
+                <tr>
+                    <td>
+                        <strong>{{ credit.customer_name }}</strong>
+                        {% if credit.phone %}<br><small>{{ credit.phone }}</small>{% endif %}
+                    </td>
+                    <td>
+                        <!-- Changed to show all products in the credit -->
+                        {% for item in credit.items.all %}
+                            {{ item.product.name }} ({{ item.quantity }} × KES {{ item.unit_price|floatformat:2 }})<br>
+                        {% endfor %}
+                    </td>
+                    <td class="text-end">KES {{ credit.amount|floatformat:2 }}</td>
+                    <td>{{ credit.date_issued|date:"M d, Y" }}</td>
+                    <td>
+                        {% if credit.is_paid %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle"></i> Paid
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-exclamation-circle"></i> Unpaid
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not credit.is_paid %}
+                        <a href="{% url 'mark_credit_paid' credit.id %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-check"></i> Mark Paid
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+                        <h5>No credit transactions found</h5>
+                        <p class="text-muted">Try adjusting your filters</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

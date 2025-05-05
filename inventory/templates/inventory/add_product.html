@@ -1,0 +1,170 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+<style>
+    .add-product-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2.5rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-title {
+        color: #4361ee;
+        font-weight: 700;
+        margin-bottom: 1.8rem;
+        text-align: center;
+        position: relative;
+    }
+    
+    .form-title:after {
+        content: '';
+        display: block;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(to right, #4361ee, #4cc9f0);
+        margin: 0.8rem auto 0;
+        border-radius: 2px;
+    }
+    
+    .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.8rem 1.2rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-bottom: 1.2rem;
+    }
+    
+    .form-control:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+    
+    .form-control::placeholder {
+        color: #a0a0a0;
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #4361ee, #3f37c9);
+        border: none;
+        color: white;
+        padding: 0.8rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        width: 100%;
+        margin-top: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+    }
+    
+    .btn-add:active {
+        transform: translateY(0);
+    }
+    
+    .btn-add i {
+        margin-right: 8px;
+        font-size: 1.2rem;
+    }
+    
+    .input-group {
+        position: relative;
+    }
+    
+    .input-group .currency {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4361ee;
+        font-weight: bold;
+    }
+    
+    .price-input {
+        padding-left: 30px !important;
+    }
+    
+    @media (max-width: 576px) {
+        .add-product-container {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+    }
+</style>
+
+<div class="add-product-container">
+    <h2 class="form-title">
+        <i class="fas fa-plus-circle"></i> Add New Product
+    </h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <input name="name" class="form-control" placeholder="Product name" required>
+        </div>
+        
+        <div class="mb-3">
+            <input name="category" class="form-control" placeholder="Category (e.g., Grocery, Electronics)">
+        </div>
+        
+        <div class="mb-3">
+            <input name="quantity" type="number" class="form-control" placeholder="Quantity in stock" required min="0">
+        </div>
+        
+        <div class="mb-3 input-group">
+            <span class="currency">KES</span>
+            <input name="cost_price" type="number" step="0.01" class="form-control price-input" placeholder="Cost price per unit" required min="0">
+        </div>
+        
+        <div class="mb-3 input-group">
+            <span class="currency">KES</span>
+            <input name="selling_price" type="number" step="0.01" class="form-control price-input" placeholder="Selling price per unit" required min="0">
+        </div>
+        
+        <button type="submit" class="btn btn-add">
+            <i class="fas fa-save"></i> Add Product
+        </button>
+    </form>
+</div>
+
+<script>
+    // Add animation to form inputs on focus
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-2px)';
+        });
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Validate that selling price is >= cost price
+    const sellingPriceInput = document.querySelector('input[name="selling_price"]');
+    const costPriceInput = document.querySelector('input[name="cost_price"]');
+    
+    sellingPriceInput.addEventListener('change', function() {
+        if (parseFloat(this.value) < parseFloat(costPriceInput.value)) {
+            this.setCustomValidity('Selling price should be equal to or higher than cost price');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,467 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+<style>
+
+    .credit-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2.5rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 0.6s ease-out;
+        border-top: 5px solid #ffc107;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-title {
+        color: #ffc107;
+        font-weight: 700;
+        margin-bottom: 1.8rem;
+        text-align: center;
+        position: relative;
+    }
+    
+    .form-title:after {
+        content: '';
+        display: block;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(to right, #ffc107, #ff9a00);
+        margin: 0.8rem auto 0;
+        border-radius: 2px;
+    }
+    
+    .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.8rem 1.2rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+    
+    select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffc107' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+    }
+    
+    .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, #ff6b6b, #f06595);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+    
+    .btn-issue {
+        background: linear-gradient(135deg, #ffc107, #ff9a00);
+        border: none;
+        color: #212529;
+        padding: 0.8rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        width: 100%;
+        margin-top: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-issue:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        color: #212529;
+    }
+    
+    .btn-issue:active {
+        transform: translateY(0);
+    }
+    
+    .btn-issue i {
+        margin-right: 8px;
+        font-size: 1.2rem;
+    }
+    
+    .input-icon {
+        position: relative;
+    }
+    
+    .input-icon i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #ffc107;
+    }
+    
+    .input-icon input {
+        padding-left: 40px !important;
+    }
+    
+    .product-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        align-items: flex-end;
+    }
+    
+    .product-select {
+        flex: 2;
+    }
+    
+    .quantity-input {
+        flex: 1;
+    }
+    
+    .remove-product {
+        flex: 0 0 40px;
+        margin-bottom: 15px;
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        height: 40px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    
+    .remove-product:hover {
+        background: #e74c3c;
+    }
+    
+    .remove-product:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .add-product {
+        background: #2ecc71;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .add-product:hover {
+        background: #27ae60;
+    }
+    
+    #products-container {
+        margin-bottom: 20px;
+    }
+    
+    #credit-summary {
+        transition: all 0.3s ease;
+    }
+    
+    @media (max-width: 576px) {
+        .credit-container {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+        
+        .product-row {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .product-select, .quantity-input {
+            width: 100%;
+        }
+    }
+
+
+    /* Your existing CSS styles remain exactly the same */
+    .credit-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2.5rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 0.6s ease-out;
+        border-top: 5px solid #ffc107;
+    }
+    /* ... rest of your CSS ... */
+</style>
+
+<div class="credit-container">
+    <h2 class="form-title">
+        <i class="fas fa-hand-holding-usd"></i> Issue Customer Credit
+    </h2>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i> 
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <form method="post" id="credit-form">
+        {% csrf_token %}
+        
+        <div class="mb-3 input-icon">
+            <i class="fas fa-user"></i>
+            <input name="customer" class="form-control" 
+                   value="{{ preserved_data.customer|default:'' }}"
+                   placeholder="Customer Full Name" required>
+        </div>
+        
+        <div class="mb-3 input-icon">
+            <i class="fas fa-phone"></i>
+            <input name="phone" type="tel" class="form-control" 
+                   value="{{ preserved_data.phone|default:'' }}"
+                   placeholder="Phone Number (optional)">
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Notes (optional):</label>
+            <textarea name="notes" class="form-control" rows="2">{{ preserved_data.notes|default:'' }}</textarea>
+        </div>
+        
+        <h5 class="mb-3">Products</h5>
+        <div id="products-container">
+            {% if preserved_data.product_ids %}
+                {% for product in products %}
+                    {% if product.id|stringformat:"s" in preserved_data.product_ids %}
+                        {% with index=forloop.counter0 %}
+                        <div class="product-row">
+                            <div class="product-select">
+                                <select name="products[]" class="form-control" required>
+                                    <option value="">Select Product</option>
+                                    {% for p in products %}
+                                    <option value="{{ p.id }}" 
+                                            data-price="{{ p.selling_price }}" 
+                                            data-stock="{{ p.quantity }}"
+                                            {% if product.id == p.id %}selected{% endif %}>
+                                        {{ p.name }} - KES {{ p.selling_price }} ({{ p.quantity }} in stock)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="quantity-input">
+                                <input name="quantities[]" type="number" class="form-control" 
+                                       value="{{ preserved_data.quantities.index }}" placeholder="Qty" required min="1">
+                            </div>
+                            <button type="button" class="remove-product" {% if forloop.first %}disabled{% endif %}>
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {% endwith %}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="product-row">
+                    <div class="product-select">
+                        <select name="products[]" class="form-control" required>
+                            <option value="">Select Product</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}" 
+                                    data-price="{{ product.selling_price }}" 
+                                    data-stock="{{ product.quantity }}">
+                                {{ product.name }} - KES {{ product.selling_price }} ({{ product.quantity }} in stock)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="quantity-input">
+                        <input name="quantities[]" type="number" class="form-control" placeholder="Qty" required min="1">
+                    </div>
+                    <button type="button" class="remove-product" disabled>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+        
+        <button type="button" id="add-product" class="add-product">
+            <i class="fas fa-plus"></i> Add Another Product
+        </button>
+        
+        <div class="mb-3 p-3 bg-light rounded" id="credit-summary" style="display: none;">
+            <h5 class="text-warning"><i class="fas fa-file-invoice-dollar"></i> Credit Summary</h5>
+            <div class="d-flex justify-content-between">
+                <span>Total Amount:</span>
+                <strong id="credit-amount">KES 0.00</strong>
+            </div>
+            <small class="text-muted">This amount will be recorded as customer debt</small>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <a href="{% url 'credit_list' %}" class="btn btn-secondary flex-grow-1">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-issue flex-grow-1">
+                <i class="fas fa-file-signature"></i> Issue Credit
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize product rows
+        const productsContainer = document.getElementById('products-container');
+        const addProductBtn = document.getElementById('add-product');
+        
+        // Add new product row
+        addProductBtn.addEventListener('click', function() {
+            const newRow = document.createElement('div');
+            newRow.className = 'product-row';
+            
+            newRow.innerHTML = `
+                <div class="product-select">
+                    <select name="products[]" class="form-control" required>
+                        <option value="">Select Product</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" 
+                                data-price="{{ product.selling_price }}" 
+                                data-stock="{{ product.quantity }}">
+                            {{ product.name }} - KES {{ product.selling_price }} ({{ product.quantity }} in stock)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="quantity-input">
+                    <input name="quantities[]" type="number" class="form-control" placeholder="Qty" required min="1">
+                </div>
+                <button type="button" class="remove-product">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            productsContainer.appendChild(newRow);
+            updateRemoveButtons();
+            addProductEventListeners(newRow);
+        });
+        
+        // Remove product row
+        productsContainer.addEventListener('click', function(e) {
+            const removeBtn = e.target.closest('.remove-product');
+            if (removeBtn && !removeBtn.disabled) {
+                const row = removeBtn.closest('.product-row');
+                row.remove();
+                updateRemoveButtons();
+                calculateTotal();
+            }
+        });
+        
+        // Update remove buttons state
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.product-row');
+            const removeButtons = document.querySelectorAll('.remove-product');
+            
+            removeButtons.forEach((btn, index) => {
+                btn.disabled = rows.length <= 1;
+            });
+        }
+        
+        // Add event listeners to product inputs
+        function addProductEventListeners(row) {
+            const select = row.querySelector('select[name="products[]"]');
+            const input = row.querySelector('input[name="quantities[]"]');
+            
+            select.addEventListener('change', calculateTotal);
+            input.addEventListener('input', calculateTotal);
+            
+            // Add focus animations
+            [select, input].forEach(el => {
+                el.addEventListener('focus', function() {
+                    this.style.borderColor = '#ffc107';
+                    this.style.boxShadow = '0 0 0 3px rgba(255, 193, 7, 0.2)';
+                });
+                
+                el.addEventListener('blur', function() {
+                    this.style.borderColor = '#e0e0e0';
+                    this.style.boxShadow = 'none';
+                });
+            });
+        }
+        
+        // Calculate total amount
+        function calculateTotal() {
+            let total = 0;
+            let hasError = false;
+            const rows = document.querySelectorAll('.product-row');
+            
+            rows.forEach(row => {
+                const select = row.querySelector('select[name="products[]"]');
+                const input = row.querySelector('input[name="quantities[]"]');
+                
+                if (select.value && input.value) {
+                    const selectedOption = select.options[select.selectedIndex];
+                    const price = parseFloat(selectedOption.dataset.price);
+                    const quantity = parseFloat(input.value);
+                    const stock = parseInt(selectedOption.dataset.stock);
+                    
+                    // Validate stock
+                    if (quantity > stock) {
+                        input.setCustomValidity(`Only ${stock} ${stock === 1 ? 'item' : 'items'} available`);
+                        hasError = true;
+                    } else if (quantity <= 0) {
+                        input.setCustomValidity('Quantity must be at least 1');
+                        hasError = true;
+                    } else {
+                        input.setCustomValidity('');
+                        total += price * quantity;
+                    }
+                }
+            });
+            
+            // Update summary
+            const creditSummary = document.getElementById('credit-summary');
+            const creditAmount = document.getElementById('credit-amount');
+            
+            if (total > 0 && !hasError) {
+                creditAmount.textContent = `KES ${total.toFixed(2)}`;
+                creditSummary.style.display = 'block';
+            } else {
+                creditSummary.style.display = 'none';
+            }
+        }
+        
+        // Initialize existing rows
+        document.querySelectorAll('.product-row').forEach(row => {
+            addProductEventListeners(row);
+        });
+        
+        // Initial calculation
+        calculateTotal();
+    });
+</script>
+{% endblock %}

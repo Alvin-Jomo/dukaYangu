@@ -1,0 +1,131 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-file-invoice-dollar text-danger"></i> 
+            Customer Debt Summary
+        </h2>
+        <a href="{% url 'credit_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Credits
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Total Outstanding</h5>
+                    <h3>KES {{ summary_stats.total_unpaid|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Customers Owing</h5>
+                    <h3>{{ summary_stats.total_customers }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info">
+                <div class="card-body">
+                    <h5 class="card-title text-info">Unpaid Credits</h5>
+                    <h3>{{ summary_stats.total_credits }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Debt Table -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Customer Breakdown</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th class="text-right">Total Debt</th>
+                            <th>Oldest Debt</th>
+                            <th>Credits</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customer_debts %}
+                        <tr>
+                            <td>
+                                <strong>{{ customer.customer_name }}</strong>
+                            </td>
+                            <td>{{ customer.phone|default:"-" }}</td>
+                            <td class="text-right text-danger">
+                                <strong>KES {{ customer.total_debt|floatformat:2 }}</strong>
+                            </td>
+                            <td>{{ customer.oldest_debt|date:"M d, Y" }}</td>
+                            <td>{{ customer.credit_count }}</td>
+                            <td>
+                                <a href="{% url 'credit_list' %}?customer={{ customer.customer_name|urlencode }}&status=unpaid" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-list"></i> View Credits
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                <h5>No outstanding debts!</h5>
+                                <p class="text-muted">All credits have been paid</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Unpaid Credits -->
+    <div class="card mt-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Recent Unpaid Credits</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for credit in unpaid_credits|slice:":5" %}
+                        <tr>
+                            <td>{{ credit.date_issued|date:"M d" }}</td>
+                            <td>{{ credit.customer_name }}</td>
+                            <td>{{ credit.product.name }} ({{ credit.quantity }})</td>
+                            <td class="text-right">KES {{ credit.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add this to your navigation menu or credit_list.html -->
+<a href="{% url 'credit_list' %}" class="btn btn-outline-danger">
+    <i class="fas fa-file-invoice-dollar"></i> View Debt Summary
+</a>
+
+{% endblock %}

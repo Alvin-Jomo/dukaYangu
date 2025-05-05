@@ -1,0 +1,466 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4cc9f0;
+        --secondary: #3f37c9;
+        --success: #06d6a0;
+        --danger: #ef233c;
+        --warning: #ffd166;
+        --dark: #2b2d42;
+        --light: #f8f9fa;
+    }
+    
+    .report-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+    
+    .report-title {
+        color: var(--dark);
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.8rem;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .report-title:after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -10px;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--primary-light));
+        border-radius: 2px;
+        animation: slideIn 1s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from { width: 0; opacity: 0; }
+        to { width: 60px; opacity: 1; }
+    }
+    
+    .date-range-container {
+        background: var(--light);
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        animation: slideInRight 0.8s ease-out;
+    }
+    
+    @keyframes slideInRight {
+        from { transform: translateX(20px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .date-range {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .date-range label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .date-range input {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .date-range input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        outline: none;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 500px;
+        margin-bottom: 2rem;
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        animation: fadeInUp 0.8s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid var(--primary);
+        transition: all 0.3s ease;
+        animation: fadeIn 0.8s ease-out;
+        animation-fill-mode: backwards;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-card:nth-child(1) { animation-delay: 0.1s; border-left-color: var(--primary); }
+    .metric-card:nth-child(2) { animation-delay: 0.2s; border-left-color: var(--success); }
+    .metric-card:nth-child(3) { animation-delay: 0.3s; border-left-color: var(--warning); }
+    .metric-card:nth-child(4) { animation-delay: 0.4s; border-left-color: var(--secondary); }
+    
+    .metric-card h3 {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .metric-card p {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0 0 1rem 0;
+    }
+    
+    .metric-card .trend {
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .trend.up {
+        color: var(--success);
+    }
+    
+    .trend.down {
+        color: var(--danger);
+    }
+    
+    .trend.neutral {
+        color: #6c757d;
+    }
+    
+    .btn-update {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
+    }
+    
+    .btn-update:hover {
+        background: var(--secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-update:active {
+        transform: translateY(0);
+    }
+    
+    @media (max-width: 992px) {
+        .chart-container {
+            height: 400px;
+        }
+        
+        .report-header {
+            flex-direction: column;
+        }
+        
+        .date-range-container {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 350px;
+            padding: 1rem;
+        }
+        
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .date-range {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="report-container">
+        <div class="report-header">
+            <div>
+                <h2 class="report-title">Sales Performance Report</h2>
+                <p class="text-muted">Visualize and analyze your sales trends</p>
+            </div>
+            
+            <div class="date-range-container">
+                <label>Select Date Range</label>
+                <div class="date-range">
+                    <input type="date" class="form-control" id="startDate" value="{{ default_start_date }}">
+                    <span>to</span>
+                    <input type="date" class="form-control" id="endDate" value="{{ default_end_date }}">
+                    <button class="btn-update" id="updateReport">
+                        <i class="fas fa-sync-alt"></i> Update
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Total Sales</h3>
+                <p id="totalSales">KES 0.00</p>
+                <div class="trend" id="salesTrend">
+                    <i class="fas fa-arrow-right"></i> <span>Loading data...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Avg. Daily Sales</h3>
+                <p id="avgSales">KES 0.00</p>
+                <div class="trend" id="avgTrend">
+                    <i class="fas fa-arrow-right"></i> <span>Loading data...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Total Transactions</h3>
+                <p id="totalTransactions">0</p>
+                <div class="trend" id="transactionsTrend">
+                    <i class="fas fa-arrow-right"></i> <span>Loading data...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Best Selling Product</h3>
+                <p id="bestProduct">-</p>
+                <div class="trend">
+                    <span id="bestProductQty">0 units</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-gradient-colors"></script>
+<script>
+    // Initialize chart with gradient
+    const ctx = document.getElementById('salesChart');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Daily Sales (KES)',
+                data: [],
+                backgroundColor: createGradient(ctx),
+                borderColor: 'rgba(67, 97, 238, 0.8)',
+                borderWidth: 1,
+                borderRadius: 6,
+                hoverBackgroundColor: 'rgba(63, 55, 201, 0.8)',
+                hoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'KES ' + context.raw.toLocaleString();
+                        }
+                    },
+                    backgroundColor: 'rgba(43, 45, 66, 0.9)',
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'KES ' + value.toLocaleString();
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            animation: {
+                duration: 1500,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+
+    // Create gradient for chart bars
+    function createGradient(chartContext) {
+        const ctx = chartContext.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(67, 97, 238, 0.8)');
+        gradient.addColorStop(1, 'rgba(76, 201, 240, 0.8)');
+        return gradient;
+    }
+
+    // Function to fetch and update report data
+    function updateReport() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        // Show loading state with animation
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.style.opacity = '0.7';
+        });
+        
+        document.querySelectorAll('.trend span').forEach(el => {
+            el.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        });
+        
+        fetch(`{% url 'sales_report' %}?start_date=${startDate}&end_date=${endDate}`)
+            .then(res => res.json())
+            .then(data => {
+                // Update chart with animation
+                chart.data.labels = data.labels;
+                chart.data.datasets[0].data = data.totals;
+                chart.update();
+                
+                // Animate metric cards update
+                document.querySelectorAll('.metric-card').forEach(card => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        card.style.transform = 'scale(1)';
+                    }, 300);
+                });
+                
+                // Update metrics with formatting
+                document.getElementById('totalSales').textContent = 
+                    'KES ' + data.total_sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('avgSales').textContent = 
+                    'KES ' + data.avg_sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('totalTransactions').textContent = 
+                    data.total_transactions.toLocaleString();
+                document.getElementById('bestProduct').textContent = 
+                    data.best_product.name || '-';
+                document.getElementById('bestProductQty').textContent = 
+                    data.best_product.quantity ? data.best_product.quantity + ' units' : '-';
+                
+                // Update trends (simplified - in real app you'd compare periods)
+                updateTrendIndicators(data);
+            })
+            .catch(error => {
+                console.error('Error fetching report data:', error);
+                alert('Error loading report data. Please try again.');
+                document.querySelectorAll('.metric-card').forEach(card => {
+                    card.style.opacity = '1';
+                });
+            });
+    }
+    
+    // Simplified trend indicators
+    function updateTrendIndicators(data) {
+        // For demo - in real app you would compare with previous period
+        const salesTrend = document.getElementById('salesTrend');
+        salesTrend.innerHTML = `
+            <i class="fas fa-chart-line"></i> 
+            <span>${data.total_sales ? 'KES ' + data.total_sales.toLocaleString() : 'No data'}</span>
+        `;
+        
+        const avgTrend = document.getElementById('avgTrend');
+        avgTrend.innerHTML = `
+            <i class="fas fa-calendar-day"></i> 
+            <span>${data.avg_sales ? 'KES ' + data.avg_sales.toLocaleString() + '/day' : 'No data'}</span>
+        `;
+        
+        const transTrend = document.getElementById('transactionsTrend');
+        transTrend.innerHTML = `
+            <i class="fas fa-receipt"></i> 
+            <span>${data.total_transactions ? data.total_transactions + ' transactions' : 'No transactions'}</span>
+        `;
+    }
+    
+    // Initial load with slight delay for animation
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            updateReport();
+        }, 300);
+    });
+    
+    // Update report when button clicked
+    document.getElementById('updateReport').addEventListener('click', function() {
+        // Add button click animation
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+        setTimeout(() => {
+            updateReport();
+            this.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+        }, 100);
+    });
+</script>
+{% endblock %}

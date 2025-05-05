@@ -1,0 +1,327 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+<style>
+    body {
+        background: url('https://d-art.ppstatic.pl/kadry/k/r/1/55/a5/629866e69b7fc_o_full.jpg') no-repeat center center fixed;
+        background-size: cover;
+        position: relative;
+    }
+    body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /* background: rgba(255, 255, 255, 0.85); */
+        z-index: -1;
+    }
+    .dashboard-container {
+        background: rgba(255, 255, 255, 1);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0,0,0,1X.1);
+    }
+    .card {
+        transition: all 0.3s ease;
+        transform: translateY(0);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .card-body {
+        padding: 1.25rem;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 5px;
+        word-break: break-word;
+    }
+    @media (min-width: 768px) {
+        .stat-value {
+            font-size: 1.8rem;
+        }
+    }
+    @media (min-width: 992px) {
+        .stat-value {
+            font-size: 2rem;
+        }
+    }
+    .dashboard-title {
+        animation: fadeInDown 0.8s;
+        color: #2c3e50;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .stat-card {
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+        margin-bottom: 20px;
+    }
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+    .btn-action {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        margin: 5px;
+        border-radius: 50px !important;
+        font-weight: 500;
+    }
+    .btn-action:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .btn-action::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%);
+        transform-origin: 50% 50%;
+    }
+    .btn-action:focus:not(:active)::after {
+        animation: ripple 1s ease-out;
+    }
+    @keyframes ripple {
+        0% {
+            transform: scale(0, 0);
+            opacity: 0.5;
+        }
+        100% {
+            transform: scale(20, 20);
+            opacity: 0;
+        }
+    }
+    .debt-section {
+        margin-top: 30px;
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .debt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .debt-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px dashed #eee;
+    }
+    .debt-item:last-child {
+        border-bottom: none;
+    }
+    .debt-customer {
+        font-weight: 500;
+    }
+    .debt-amount {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .view-all-debts {
+        margin-top: 15px;
+    }
+    .badge-debt {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+    }
+</style>
+
+<div class="dashboard-container">
+    <h2 class="dashboard-title mb-4">Duka Dashboard</h2>
+
+    <div class="row">
+        {% with delays="0.2s 0.4s 0.6s 0.8s 1.0s 1.2s" %}
+        <div class="col-md-4 col-lg-3 stat-card" style="animation-delay: 0.2s">
+            <div class="card p-3 bg-light">
+                <div class="card-body text-center">
+                    <strong>Total Products</strong> 
+                    <div class="stat-value" id="total-products">{{ total_products }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 stat-card" style="animation-delay: 0.4s">
+            <div class="card p-3 bg-success text-white">
+                <div class="card-body text-center">
+                    <strong>Total Sales</strong> 
+                    <div class="stat-value">KES <span id="total-sales">{{ total_sales }}</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 stat-card" style="animation-delay: 0.6s">
+            <div class="card p-3 bg-danger text-white">
+                <div class="card-body text-center">
+                    <strong>Unpaid Credits</strong> 
+                    <div class="stat-value">KES <span id="total-credits">{{ total_credits }}</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 stat-card" style="animation-delay: 0.8s">
+            <div class="card p-3 bg-primary text-white">
+                <div class="card-body text-center">
+                    <strong>Sales Records</strong> 
+                    <div class="stat-value" id="sales-count">{{ sales_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 stat-card" style="animation-delay: 1.0s">
+            <div class="card p-3 bg-info text-white">
+                <div class="card-body text-center">
+                    <strong>Today's Sales</strong> 
+                    <div class="stat-value">KES <span id="today-sales">{{ today_sales }}</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 stat-card" style="animation-delay: 1.2s">
+            <div class="card p-3 bg-secondary text-white">
+                <div class="card-body text-center">
+                    <strong>This Week</strong> 
+                    <div class="stat-value">KES <span id="weekly-sales">{{ weekly_sales }}</span></div>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+    </div>
+
+    <div class="mt-4 mb-3 text-center">
+        <div class="d-flex flex-wrap justify-content-center">
+            <a class="btn btn-outline-info btn-action" href="{% url 'add_product' %}">
+                <i class="fas fa-plus-circle"></i> Add Product
+            </a>
+            <a class="btn btn-outline-success btn-action" href="{% url 'record_sale' %}">
+                <i class="fas fa-cash-register"></i> Record Sale
+            </a>
+            <a class="btn btn-outline-warning btn-action" href="{% url 'issue_credit' %}">
+                <i class="fas fa-hand-holding-usd"></i> Issue Credit
+            </a>
+            <a class="btn btn-outline-primary btn-action" href="{% url 'product_list' %}">
+                <i class="fas fa-boxes"></i> Product List
+            </a>
+            <a class="btn btn-outline-dark btn-action" href="{% url 'report_page' %}">
+                <i class="fas fa-chart-bar"></i> View Report
+            </a>
+        </div>
+    </div>
+</div>
+
+    <!-- Add this new debt section -->
+    <div class="debt-section">
+        <div class="debt-header">
+            <h4><i class="fas fa-exclamation-triangle text-danger"></i> Outstanding Debts</h4>
+            <span class="badge-debt">{{ debt_count }} unpaid</span>
+        </div>
+        
+        {% if top_debts %}
+            {% for debt in top_debts %}
+            <div class="debt-item">
+                <span class="debt-customer">
+                    <i class="fas fa-user"></i> {{ debt.customer_name }}
+                    {% if debt.phone %}<small class="text-muted">({{ debt.phone }})</small>{% endif %}
+                </span>
+                <span class="debt-amount">KES {{ debt.amount|floatformat:2 }}</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-3">
+                <i class="fas fa-check-circle text-success fa-2x"></i>
+                <p class="mt-2">No outstanding debts!</p>
+            </div>
+        {% endif %}
+        
+        <div class="text-center view-all-debts">
+            <a href="{% url 'debt_summary' %}" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-file-invoice-dollar"></i> View All Debts
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add Font Awesome if not already loaded
+    if (!document.querySelector('link[href*="font-awesome"]')) {
+        const faLink = document.createElement('link');
+        faLink.rel = 'stylesheet';
+        faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+        document.head.appendChild(faLink);
+    }
+
+    // Format large numbers to fit in cards
+    function formatNumber(value) {
+        if (value >= 1000000) {
+            return (value/1000000).toFixed(1) + 'M';
+        }
+        if (value >= 1000) {
+            return (value/1000).toFixed(1) + 'K';
+        }
+        return value;
+    }
+
+    // Add animation to cards on scroll
+    document.addEventListener('DOMContentLoaded', function() {
+        const statCards = document.querySelectorAll('.stat-card');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {threshold: 0.1});
+
+        statCards.forEach(card => {
+            card.style.animationPlayState = 'paused';
+            observer.observe(card);
+        });
+
+        // Format numbers in cards
+        const numberElements = [
+            'total-products', 'total-sales', 'total-credits',
+            'sales-count', 'today-sales', 'weekly-sales'
+        ];
+        
+        numberElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                const value = parseFloat(element.textContent.replace(/,/g, ''));
+                if (!isNaN(value)) {
+                    element.textContent = formatNumber(value);
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

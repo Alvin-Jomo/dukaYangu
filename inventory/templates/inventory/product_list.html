@@ -1,0 +1,273 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+<style>
+    .product-list-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin: 2rem auto;
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .list-title {
+        color: #4361ee;
+        font-weight: 700;
+        margin-bottom: 1.8rem;
+        text-align: center;
+        position: relative;
+    }
+    
+    .list-title:after {
+        content: '';
+        display: block;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(to right, #4361ee, #4cc9f0);
+        margin: 0.8rem auto 1.5rem;
+        border-radius: 2px;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: linear-gradient(135deg, #4361ee, #3f37c9);
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        border: none;
+        position: sticky;
+        top: 0;
+    }
+    
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+        transform: translateX(5px);
+    }
+    
+    .table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+    
+    .table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .badge-category {
+        background: #e9ecef;
+        color: #495057;
+        padding: 0.35rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .stock-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .stock-low {
+        background-color: #ff6b6b;
+        animation: pulse 1.5s infinite;
+    }
+    
+    .stock-medium {
+        background-color: #ffd166;
+    }
+    
+    .stock-high {
+        background-color: #06d6a0;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(0.95); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(0.95); }
+    }
+    
+    .price {
+        font-weight: 600;
+        color: #2b2d42;
+    }
+    
+    .price-cost {
+        color: #ef233c;
+    }
+    
+    .price-selling {
+        color: #06d6a0;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        border-radius: 5px;
+    }
+    
+    .search-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .search-input {
+        border: 2px solid #e0e0e0;
+        border-radius: 50px;
+        padding: 0.6rem 1.2rem;
+        width: 100%;
+        max-width: 400px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .product-list-container {
+            padding: 1rem;
+            margin: 1rem;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table, .table tbody, .table tr, .table td {
+            display: block;
+            width: 100%;
+        }
+        
+        .table tr {
+            margin-bottom: 1rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        
+        .table td {
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 1rem;
+            width: calc(50% - 1rem);
+            padding-right: 1rem;
+            font-weight: 600;
+            text-align: left;
+            color: #4361ee;
+        }
+    }
+</style>
+
+<div class="product-list-container">
+    <h2 class="list-title">
+        <i class="fas fa-boxes"></i> Product Inventory
+    </h2>
+    
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Search products..." id="productSearch">
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td data-label="Product">
+                        <strong>{{ product.name }}</strong>
+                    </td>
+                    <td data-label="Category">
+                        <span class="badge-category">{{ product.category|default:"Uncategorized" }}</span>
+                    </td>
+                    <td data-label="Stock">
+                        <span class="stock-indicator 
+                            {% if product.quantity < 5 %}stock-low
+                            {% elif product.quantity < 15 %}stock-medium
+                            {% else %}stock-high
+                            {% endif %}"></span>
+                        {{ product.quantity }}
+                    </td>
+                    <td data-label="Cost Price" class="price price-cost">
+                        KES {{ product.cost_price }}
+                    </td>
+                    <td data-label="Selling Price" class="price price-selling">
+                        KES {{ product.selling_price }}
+                    </td>
+                    <td data-label="Actions" class="action-btns">
+                        <a href="{% url 'update_product' product.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'delete_product' product.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Search functionality
+    document.getElementById('productSearch').addEventListener('input', function() {
+        const searchValue = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.table tbody tr');
+        
+        rows.forEach(row => {
+            const productName = row.querySelector('td:first-child').textContent.toLowerCase();
+            if (productName.includes(searchValue)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // Highlight low stock items
+    document.querySelectorAll('.stock-low').forEach(item => {
+        item.parentElement.style.fontWeight = 'bold';
+    });
+</script>
+{% endblock %}
