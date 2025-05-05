@@ -1,2 +1,2 @@
 # duka
-an website to help manage small dukas 
+a website to help manage small dukas 
