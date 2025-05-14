@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-!fv@p!p%@1-mc+(2y60@dj4mr8zp#@r^jw)n#)6=r8@obl(8+4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]  # Allow all hosts for development purposes
 
 
 # Application definition
@@ -37,9 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-     'django.contrib.flatpages',
-  'django.contrib.sites',
-
+    'django.contrib.flatpages',
+    'django.contrib.sites',
+    'jazzmin',
+    'django_ckeditor_5',
     'inventory',  # Custom app for inventory management
 ]
 
@@ -109,7 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
 
 USE_I18N = True
 
@@ -120,7 +122,88 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'alert-info',
+    messages.INFO: 'alert-info',
+    messages.SUCCESS: 'alert-success',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
+}
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "bold", "italic", "underline", "strikethrough", "code",
+            "highlight", "bulletedList", "numberedList", "outdent", "indent",
+            "blockQuote", "insertTable", "insertImage", "fontSize",
+            "fontColor", "fontBackgroundColor", "removeFormat"
+        ],
+        "image": {
+            "toolbar": [
+                "imageTextAlternative", "imageStyle:alignLeft",
+                "imageStyle:alignRight", "imageStyle:alignCenter",
+                "imageStyle:side"
+            ]
+        },
+        "table": {
+            "contentToolbar": [
+                "tableColumn", "tableRow", "mergeTableCells",
+                "tableProperties", "tableCellProperties"
+            ]
+        },
+    }
+}
+
+# Jazzmin Admin Customization
+JAZZMIN_SETTINGS = {
+    "site_title": "My Rental Management",
+    "site_header": "Rental Management Admin",
+    "site_brand": "ALVOTHEBOSS",
+    "welcome_sign": "Welcome to Rental Management Dashboard",
+    "copyright": "Rental Company © 2024",
+    "theme": "cosmo",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": True,
+    "brand_small_text": False,
+    "brand_colour": "navbar-indigo",
+    "accent": "accent-olive",
+    "navbar": "navbar-indigo navbar-dark",
+    "no_navbar_border": False,
+    "navbar_fixed": False,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-indigo",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-outline-primary",
+        "secondary": "btn-outline-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
+}
+
+CKEDITOR_UPLOAD_PATH = 'uploads/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -132,3 +215,203 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 SITE_ID = 1  # Add this to your settings.py
+
+# CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+
+customColorPalette = [
+    {"color": "hsl(4, 90%, 58%)", "label": "Red"},
+    {"color": "hsl(340, 82%, 52%)", "label": "Pink"},
+    {"color": "hsl(291, 64%, 42%)", "label": "Purple"},
+    {"color": "hsl(262, 52%, 47%)", "label": "Deep Purple"},
+    {"color": "hsl(231, 48%, 48%)", "label": "Indigo"},
+    {"color": "hsl(207, 90%, 54%)", "label": "Blue"},
+]
+
+CSRF_COOKIE_HTTPONLY = False  # Set to False to allow JavaScript to access CSRF token
+CSRF_USE_SESSIONS = False  # Ensure Django uses cookies instead of sessions
+CSRF_COOKIE_SECURE = False  # Set to True if using HTTPS
+
+
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "heading",
+            "|",
+            "bold",
+            "italic",
+            "link",
+            "bulletedList",
+            "numberedList",
+            "blockQuote",
+            "imageUpload"
+        ],
+    },
+    "comment": {
+        "language": {"ui": "en", "content": "en"},
+        "toolbar": [
+            "heading",
+            "|",
+            "bold",
+            "italic",
+            "link",
+            "bulletedList",
+            "numberedList",
+            "blockQuote",
+        ],
+    },
+    "extends": {
+        "language": "en",
+        "enterMode": 2,
+        "shiftEnterMode": 1,
+        "blockToolbar": [
+            "paragraph",
+            "heading1",
+            "heading2",
+            "heading3",
+            "|",
+            "bulletedList",
+            "numberedList",
+            "|",
+            "blockQuote",
+        ],
+        "toolbar": [
+            # "heading",
+            # "|",
+
+            # "|",
+            "bold",
+            "italic",
+            # "link",
+            "underline",
+            "strikethrough",
+            "code",
+            # "subscript",
+            # "superscript",
+            "highlight",
+            "|",
+            "bulletedList",
+            # "codeBlock",
+            # "numberedList",
+            # "todoList",
+            # "|",
+            "outdent",
+            "indent",
+            # "|",
+            "blockQuote",
+            "insertImage",
+            # "|",
+            "fontSize",
+            # "fontFamily",
+            "fontColor",
+            "fontBackgroundColor",
+            # "mediaEmbed",
+            "removeFormat",
+            "insertTable",
+            # "sourceEditing",
+        ],
+        "image": {
+            "toolbar": [
+                "imageTextAlternative",
+                "|",
+                "imageStyle:alignLeft",
+                "imageStyle:alignRight",
+                "imageStyle:alignCenter",
+                "imageStyle:side",
+                "|",
+                "toggleImageCaption",
+                "|"
+            ],
+            "styles": [
+                "full",
+                "side",
+                "alignLeft",
+                "alignRight",
+                "alignCenter",
+            ],
+        },
+        "table": {
+            "contentToolbar": [
+                "tableColumn",
+                "tableRow",
+                "mergeTableCells",
+                "tableProperties",
+                "tableCellProperties",
+            ],
+            "tableProperties": {
+                "borderColors": customColorPalette,
+                "backgroundColors": customColorPalette,
+            },
+            "tableCellProperties": {
+                "borderColors": customColorPalette,
+                "backgroundColors": customColorPalette,
+            },
+        },
+        "heading": {
+            "options": [
+                {
+                    "model": "paragraph",
+                    "title": "Paragraph",
+                    "class": "ck-heading_paragraph",
+                },
+                {
+                    "model": "heading1",
+                    "view": "h1",
+                    "title": "Heading 1",
+                    "class": "ck-heading_heading1",
+                },
+                {
+                    "model": "heading2",
+                    "view": "h2",
+                    "title": "Heading 2",
+                    "class": "ck-heading_heading2",
+                },
+                {
+                    "model": "heading3",
+                    "view": "h3",
+                    "title": "Heading 3",
+                    "class": "ck-heading_heading3",
+                },
+            ]
+        },
+        "list": {
+            "properties": {
+                "styles": True,
+                "startIndex": True,
+                "reversed": True,
+            }
+        },
+        "htmlSupport": {
+            "allow": [
+                {"name": "/.*/", "attributes": True, "classes": True, "styles": True}
+            ]
+        },
+    },
+}
+
+# Email Configuration (add this to your settings.py)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'alvotheboss@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'wckhzviqcabszodr'  # Your App Password (not your regular password)
+DEFAULT_FROM_EMAIL = 'alvotheboss@gmail.com'  # Same as EMAIL_HOST_USER
+SERVER_EMAIL = 'alvotheboss@gmail.com'  # For error notifications
+
+# Make sure these are added to your existing settings
+ADMINS = [('Admin', 'alvotheboss@gmail.com')]  # For error notifications
+MANAGERS = ADMINS
+
+# Email timeout settings
+EMAIL_TIMEOUT = 10  # seconds
+
+TWILIO_ACCOUNT_SID = "ACb53970f649acd32af82fef967ac61f1a"
+TWILIO_AUTH_TOKEN = "7e8ec5405295ca772e88bec3cd15d74e"
+TWILIO_PHONE_NUMBER = "+17693055184"
+
+
+
+

@@ -87,6 +87,12 @@
                         <p class="mb-0">Please enter your credentials</p>
                     </div>
                     <div class="card-body p-4">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        
                         <form method="post" id="loginForm">
                             {% csrf_token %}
                             
@@ -94,10 +100,10 @@
                                 <input type="text" 
                                        class="form-control" 
                                        name="username" 
-                                       placeholder="Username" 
+                                       placeholder="Username/Email/Phone" 
                                        required
                                        id="usernameField">
-                                <label for="usernameField">Username</label>
+                                <label for="usernameField">Username, Email or Phone</label>
                                 <i class="fas fa-user input-icon"></i>
                             </div>
                             
@@ -119,7 +125,7 @@
                             </div>
                             
                             <div class="text-center">
-                                <a href="{% url 'register' %}" class="text-muted">create acount</a>
+                                <a href="{% url 'register' %}" class="text-muted">Don't have an account? Register</a>
                             </div>
                         </form>
                     </div>

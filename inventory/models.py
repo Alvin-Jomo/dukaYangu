@@ -6,10 +6,17 @@ from django.db import transaction
 
 class User(AbstractUser):
     phone = models.CharField(max_length=15, unique=True, null=True, blank=True)
+    is_approved = models.BooleanField(default=False)
+    email = models.EmailField(unique=True, blank=False)  # Make email required
 
     def __str__(self):
-        return self.username
-
+        return self.username or self.email or str(self.id) 
+   
+    def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = self.email.split('@')[0]  # or some other default
+        super().save(*args, **kwargs)
+        
 class Product(models.Model):
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=100, blank=True)
