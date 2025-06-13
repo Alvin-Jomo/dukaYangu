@@ -1,5 +1,7 @@
 {% extends 'inventory/base.html' %}
+{% load static %}
 {% block content %}
+
 <style>
     :root {
         --primary: #4361ee;
@@ -245,12 +247,14 @@
             <div class="date-range-container">
                 <label>Select Date Range</label>
                 <div class="date-range">
-                    <input type="date" class="form-control" id="startDate" value="{{ default_start_date }}">
+                    <input type="date" class="form-control" id="startDate">
                     <span>to</span>
-                    <input type="date" class="form-control" id="endDate" value="{{ default_end_date }}">
+                    <input type="date" class="form-control" id="endDate">
                     <button class="btn-update" id="updateReport">
-                        <i class="fas fa-sync-alt"></i> Update
+                      <span class="icon"><i class="fas fa-sync-alt"></i></span>
+                      <span class="label">Update</span>
                     </button>
+
                 </div>
             </div>
         </div>
@@ -264,7 +268,7 @@
                 <h3>Total Sales</h3>
                 <p id="totalSales">KES 0.00</p>
                 <div class="trend" id="salesTrend">
-                    <i class="fas fa-arrow-right"></i> <span>Loading data...</span>
+                    <i class="fas fa-arrow-right"></i> <span>Select date range</span>
                 </div>
             </div>
             
@@ -272,7 +276,7 @@
                 <h3>Avg. Daily Sales</h3>
                 <p id="avgSales">KES 0.00</p>
                 <div class="trend" id="avgTrend">
-                    <i class="fas fa-arrow-right"></i> <span>Loading data...</span>
+                    <i class="fas fa-arrow-right"></i> <span>Select date range</span>
                 </div>
             </div>
             
@@ -280,7 +284,7 @@
                 <h3>Total Transactions</h3>
                 <p id="totalTransactions">0</p>
                 <div class="trend" id="transactionsTrend">
-                    <i class="fas fa-arrow-right"></i> <span>Loading data...</span>
+                    <i class="fas fa-arrow-right"></i> <span>Select date range</span>
                 </div>
             </div>
             
@@ -294,173 +298,114 @@
         </div>
     </div>
 </div>
-
+<script src="{% static 'js/report.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-gradient-colors"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 <script>
-    // Initialize chart with gradient
-    const ctx = document.getElementById('salesChart');
-    const chart = new Chart(ctx, {
+    // Initialize chart
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    let salesChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: [],
             datasets: [{
                 label: 'Daily Sales (KES)',
                 data: [],
-                backgroundColor: createGradient(ctx),
-                borderColor: 'rgba(67, 97, 238, 0.8)',
+                backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                borderColor: 'rgba(67, 97, 238, 1)',
                 borderWidth: 1,
-                borderRadius: 6,
-                hoverBackgroundColor: 'rgba(63, 55, 201, 0.8)',
-                hoverBorderWidth: 2
+                borderRadius: 6
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return 'KES ' + context.raw.toLocaleString();
-                        }
-                    },
-                    backgroundColor: 'rgba(43, 45, 66, 0.9)',
-                    titleFont: { size: 14, weight: 'bold' },
-                    bodyFont: { size: 13 },
-                    padding: 12,
-                    cornerRadius: 8
-                }
-            },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
                     ticks: {
                         callback: function(value) {
                             return 'KES ' + value.toLocaleString();
                         }
                     }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
                 }
-            },
-            animation: {
-                duration: 1500,
-                easing: 'easeOutQuart'
             }
         }
     });
 
-    // Create gradient for chart bars
-    function createGradient(chartContext) {
-        const ctx = chartContext.getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(67, 97, 238, 0.8)');
-        gradient.addColorStop(1, 'rgba(76, 201, 240, 0.8)');
-        return gradient;
+    // Set default dates (last 30 days)
+    function setDefaultDates() {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 30);
+        
+        document.getElementById('startDate').valueAsDate = startDate;
+        document.getElementById('endDate').valueAsDate = endDate;
     }
 
-    // Function to fetch and update report data
-    function updateReport() {
+    // Fetch sales data from server
+    async function fetchSalesData(startDate, endDate) {
+        try {
+            const response = await fetch(`/reports/sales/?start_date=${startDate}&end_date=${endDate}`);
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching sales data:', error);
+            throw error;
+        }
+    }
+
+    // Update the chart and metrics with new data
+    function updateDashboard(data) {
+        // Update chart
+        salesChart.data.labels = data.labels;
+        salesChart.data.datasets[0].data = data.totals;
+        salesChart.update();
+        
+        // Update metrics
+        document.getElementById('totalSales').textContent = 
+            'KES ' + data.total_sales.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('avgSales').textContent = 
+            'KES ' + data.avg_sales.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('totalTransactions').textContent = 
+            data.total_transactions.toLocaleString();
+        
+        const best = data.best_product || {};
+        document.getElementById('bestProduct').textContent = best.name || 'N/A';
+        document.getElementById('bestProductQty').textContent = best.quantity ? best.quantity + ' units' : 'N/A';
+
+    }
+
+    // Load data for the selected date range
+    async function loadData() {
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
         
-        // Show loading state with animation
-        document.querySelectorAll('.metric-card').forEach(card => {
-            card.style.opacity = '0.7';
-        });
+        if (!startDate || !endDate) return;
         
-        document.querySelectorAll('.trend span').forEach(el => {
-            el.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-        });
+        // Show loading state
+        document.getElementById('updateReport').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
         
-        fetch(`{% url 'sales_report' %}?start_date=${startDate}&end_date=${endDate}`)
-            .then(res => res.json())
-            .then(data => {
-                // Update chart with animation
-                chart.data.labels = data.labels;
-                chart.data.datasets[0].data = data.totals;
-                chart.update();
-                
-                // Animate metric cards update
-                document.querySelectorAll('.metric-card').forEach(card => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'scale(1.02)';
-                    setTimeout(() => {
-                        card.style.transform = 'scale(1)';
-                    }, 300);
-                });
-                
-                // Update metrics with formatting
-                document.getElementById('totalSales').textContent = 
-                    'KES ' + data.total_sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('avgSales').textContent = 
-                    'KES ' + data.avg_sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('totalTransactions').textContent = 
-                    data.total_transactions.toLocaleString();
-                document.getElementById('bestProduct').textContent = 
-                    data.best_product.name || '-';
-                document.getElementById('bestProductQty').textContent = 
-                    data.best_product.quantity ? data.best_product.quantity + ' units' : '-';
-                
-                // Update trends (simplified - in real app you'd compare periods)
-                updateTrendIndicators(data);
-            })
-            .catch(error => {
-                console.error('Error fetching report data:', error);
-                alert('Error loading report data. Please try again.');
-                document.querySelectorAll('.metric-card').forEach(card => {
-                    card.style.opacity = '1';
-                });
-            });
+        try {
+            const data = await fetchSalesData(startDate, endDate);
+            updateDashboard(data);
+        } catch (error) {
+            alert('Failed to load sales data. Please check console for details.');
+        } finally {
+            document.getElementById('updateReport').innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+        }
     }
-    
-    // Simplified trend indicators
-    function updateTrendIndicators(data) {
-        // For demo - in real app you would compare with previous period
-        const salesTrend = document.getElementById('salesTrend');
-        salesTrend.innerHTML = `
-            <i class="fas fa-chart-line"></i> 
-            <span>${data.total_sales ? 'KES ' + data.total_sales.toLocaleString() : 'No data'}</span>
-        `;
-        
-        const avgTrend = document.getElementById('avgTrend');
-        avgTrend.innerHTML = `
-            <i class="fas fa-calendar-day"></i> 
-            <span>${data.avg_sales ? 'KES ' + data.avg_sales.toLocaleString() + '/day' : 'No data'}</span>
-        `;
-        
-        const transTrend = document.getElementById('transactionsTrend');
-        transTrend.innerHTML = `
-            <i class="fas fa-receipt"></i> 
-            <span>${data.total_transactions ? data.total_transactions + ' transactions' : 'No transactions'}</span>
-        `;
-    }
-    
-    // Initial load with slight delay for animation
+
+    // Initialize the dashboard
     document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-            updateReport();
-        }, 300);
-    });
-    
-    // Update report when button clicked
-    document.getElementById('updateReport').addEventListener('click', function() {
-        // Add button click animation
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-        setTimeout(() => {
-            updateReport();
-            this.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
-        }, 100);
+        setDefaultDates();
+        loadData();
+        
+        // Update button event
+        document.getElementById('updateReport').addEventListener('click', loadData);
     });
 </script>
 {% endblock %}

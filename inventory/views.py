@@ -9,7 +9,6 @@ from django.db.models import Sum, Min, Count
 from django.db import transaction
 from django.core.mail import send_mail
 from django.conf import settings
-
 from .forms import CustomUserForm, CustomLoginForm, ProductForm
 from .models import Product, Sale, Credit, CreditItem, User
 from django.contrib.auth.models import User as AuthUser
@@ -19,61 +18,34 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.http import HttpResponse
 
-def test_email(request):
-    try:
-        send_mail(
-            'Test Email',
-            'This is a test email from Django.',
-            settings.DEFAULT_FROM_EMAIL,
-            ['recipient@example.com'],  # Change to your email
-            fail_silently=False,
-        )
-        return HttpResponse("Email sent successfully!")
-    except Exception as e:
-        return HttpResponse(f"Failed to send email: {str(e)}")
 # ==============================
 # 🔐 Authentication Views
 # ==============================
 
 def register(request):
-    """Handle new user registration with admin approval workflow."""
+    """Handle new user registration."""
     if request.method == 'POST':
         form = CustomUserForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = True
-            user.is_approved = False
+            user.is_active = True  # Let them login immediately
             user.save()
-            
-            # Notify admins
-            superusers = User.objects.filter(is_superuser=True)
-            if superusers.exists():
-                superuser_emails = [su.email for su in superusers]
-                send_mail(
-                    'New Account Registration - Approval Required',
-                    f'A new user has registered:\n\nUsername: {user.username}\n'
-                    f'Email: {user.email}\nPhone: {user.phone or "Not provided"}',
-                    settings.DEFAULT_FROM_EMAIL,
-                    superuser_emails,
-                    fail_silently=True
-                )
 
-            # Notify user
+            # Optional: send a welcome email
             send_mail(
-                'Registration Received',
-                'Your account is under review. You will be notified once approved.',
+                'Welcome!',
+                'Your account has been successfully created.',
                 settings.DEFAULT_FROM_EMAIL,
                 [user.email],
                 fail_silently=True
             )
 
-            messages.success(request, "Account created! Please wait for admin approval.")
+            messages.success(request, "Account created! You can now log in.")
             return redirect('login')
     else:
         form = CustomUserForm()
     
     return render(request, 'inventory/register.html', {'form': form})
-
 
 def user_login(request):
     """Handle user login with username/email/phone."""
@@ -81,16 +53,14 @@ def user_login(request):
         form = CustomLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            if user.is_approved:
-                login(request, user)
-                return redirect('dashboard')
-            messages.error(request, "Account pending approval. Please contact admin.")
+            login(request, user)
+            return redirect('dashboard')
         else:
             messages.error(request, "Invalid credentials.")
     else:
         form = CustomLoginForm()
     
-    return render(request, 'inventory/dashboard.html', {'form': form})
+    return render(request, 'inventory/login.html', {'form': form})
 
 
 # ==============================
@@ -116,58 +86,51 @@ def dashboard(request):
     return render(request, 'inventory/dashboard.html', context)
 
 
+
+@login_required        # Total sales for today
 @login_required
 def sales_report(request):
-    """Generate JSON sales report data."""
     try:
-        start_date = (datetime.strptime(request.GET['start_date'], '%Y-%m-%d').date()) \
-            if 'start_date' in request.GET else timezone.now().date() - timedelta(days=30)
-        end_date = (datetime.strptime(request.GET['end_date'], '%Y-%m-%d').date() 
-            if 'end_date' in request.GET else timezone.now().date())
-    except ValueError:
+        start_date = datetime.strptime(request.GET.get('start_date'), '%Y-%m-%d').date()
+        end_date = datetime.strptime(request.GET.get('end_date'), '%Y-%m-%d').date()
+    except (ValueError, TypeError):
         start_date = timezone.now().date() - timedelta(days=30)
         end_date = timezone.now().date()
 
-    # Sales data by date
-    sales_data = (Sale.objects
-        .filter(date_sold__date__range=(start_date, end_date))
-        .annotate(date=timezone.TruncDate('date_sold'))
-        .values('date')
-        .annotate(total=Sum('total_price'))
-        .order_by('date'))
-    
-    # Generate complete date range with totals
-    labels, totals = [], []
-    current_date = start_date
-    while current_date <= end_date:
-        labels.append(current_date.strftime('%Y-%m-%d'))
-        sale = next((item for item in sales_data if item['date'] == current_date), None)
-        totals.append(float(sale['total']) if sale else 0)
-        current_date += timedelta(days=1)
+    # Create list of days between start_date and end_date
+    date_range = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+    labels = [date.strftime('%Y-%m-%d') for date in date_range]
 
-    # Best selling product
-    best_product = (Sale.objects
-        .filter(date_sold__date__range=(start_date, end_date))
-        .values('product__name')
-        .annotate(total_quantity=Sum('quantity_sold'))
-        .order_by('-total_quantity')
-        .first() or {'product__name': None, 'total_quantity': 0})
+    # Get total sales per day
+    totals = []
+    for date in date_range:
+        day_sales = Sale.objects.filter(date_sold__date=date).aggregate(total=Sum('total_price'))['total'] or 0
+        totals.append(float(day_sales))
 
-    return JsonResponse({
+    # Get best selling product
+    best_product_qs = Sale.objects.filter(date_sold__date__range=(start_date, end_date)) \
+        .values('product__name') \
+        .annotate(total_quantity=Sum('quantity_sold')) \
+        .order_by('-total_quantity') \
+        .first()
+
+    best_product = {
+        'name': best_product_qs['product__name'] if best_product_qs else 'N/A',
+        'quantity': best_product_qs['total_quantity'] if best_product_qs else 0
+    }
+
+    response_data = {
         'labels': labels,
         'totals': totals,
         'total_sales': sum(totals),
         'avg_sales': sum(totals) / len(totals) if totals else 0,
         'total_transactions': Sale.objects.filter(date_sold__date__range=(start_date, end_date)).count(),
-        'best_product': {
-            'name': best_product['product__name'],
-            'quantity': best_product['total_quantity']
-        },
+        'best_product': best_product,
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d')
-    })
+    }
 
-
+    return JsonResponse(response_data)
 @login_required
 def report_page(request):
     """Display sales report page."""
@@ -177,52 +140,6 @@ def report_page(request):
         'default_end_date': today.strftime('%Y-%m-%d')
     })
 
-
-# ==============================
-# 🛒 Product Management Views
-# ==============================
-
-@login_required
-def product_list(request):
-    """List all products."""
-    return render(request, 'inventory/product_list.html', {
-        'products': Product.objects.all()
-    })
-
-
-@login_required
-def add_product(request):
-    """Add new product."""
-    if request.method == 'POST':
-        form = ProductForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Product added!')
-            return redirect('product_list')
-    else:
-        form = ProductForm()
-    
-    return render(request, 'inventory/add_product.html', {'form': form})
-
-
-@login_required
-def update_product(request, pk):
-    """Edit existing product."""
-    product = get_object_or_404(Product, pk=pk)
-    
-    if request.method == 'POST':
-        form = ProductForm(request.POST, instance=product)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Product updated!')
-            return redirect('product_list')
-    else:
-        form = ProductForm(instance=product)
-    
-    return render(request, 'inventory/update_product.html', {
-        'form': form,
-        'product': product
-    })
 
 
 @login_required
@@ -404,3 +321,52 @@ def issue_credit(request):
         'products': Product.objects.filter(quantity__gt=0),
         'title': 'Issue New Credit'
     })
+
+
+
+# ==============================
+# 🛒 Product Management Views
+# ==============================
+
+@login_required
+def product_list(request):
+    """List all products."""
+    return render(request, 'inventory/product_list.html', {
+        'products': Product.objects.all()
+    })
+
+
+@login_required
+def add_product(request):
+    """Add new product."""
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Product added!')
+            return redirect('product_list')
+    else:
+        form = ProductForm()
+    
+    return render(request, 'inventory/add_product.html', {'form': form})
+
+
+@login_required
+def update_product(request, pk):
+    """Edit existing product."""
+    product = get_object_or_404(Product, pk=pk)
+    
+    if request.method == 'POST':
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Product updated!')
+            return redirect('product_list')
+    else:
+        form = ProductForm(instance=product)
+    
+    return render(request, 'inventory/update_product.html', {
+        'form': form,
+        'product': product
+    })
+

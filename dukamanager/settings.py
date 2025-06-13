@@ -53,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For serving static files
 ]
 
 ROOT_URLCONF = 'dukamanager.urls'
@@ -391,7 +392,25 @@ CKEDITOR_5_CONFIGS = {
     },
 }
 
+# Email Configuration (add this to your settings.py)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'alvotheboss@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'wckhzviqcabszodr'  # Your App Password (not your regular password)
+DEFAULT_FROM_EMAIL = 'alvotheboss@gmail.com'  # Same as EMAIL_HOST_USER
+SERVER_EMAIL = 'alvotheboss@gmail.com'  # For error notifications
 
+# Make sure these are added to your existing settings
+ADMINS = [('Admin', 'alvotheboss@gmail.com')]  # For error notifications
+MANAGERS = ADMINS
+
+# Email timeout settings
+EMAIL_TIMEOUT = 10  # seconds
+TWILIO_ACCOUNT_SID = "ACb53970f649acd32af82fef967ac61f1a"
+TWILIO_AUTH_TOKEN = "7e8ec5405295ca772e88bec3cd15d74e"
+TWILIO_PHONE_NUMBER = "+17693055184"
 
 
 

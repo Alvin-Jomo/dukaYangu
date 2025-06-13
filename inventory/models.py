@@ -6,7 +6,7 @@ from django.db import transaction
 
 class User(AbstractUser):
     phone = models.CharField(max_length=15, unique=True, null=True, blank=True)
-    is_approved = models.BooleanField(default=False)
+    # is_approved = models.BooleanField(default=False)
     email = models.EmailField(unique=True, blank=False)  # Make email required
 
     def __str__(self):
